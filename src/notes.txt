@@ -1,0 +1,40 @@
+📍 GPS gives your location
+
+🧭 Compass gives your direction (North/South)
+
+📷 Camera shows real world
+
+🧠 App calculates path to destination
+
+🟢 AR arrows are placed in correct direction
+
+
+1.GPS (Geolocation API)
+
+navigator.geolocation.getCurrentPosition()
+
+2.Direction (Device Orientation API)
+
+3.Map Routing API
+	Google Directions API
+	Mapbox Directions API
+	OpenStreetMap data
+
+They return: polyline path ,turn-by-turn coordinates
+
+4.Convert GPS to AR Coordinates
+	Convert lat/lng difference into meters
+	Place 3D arrows relative to user position
+
+5.Camera Overlay
+	
+
+User Location (GPS)
+        ↓
+Routing API → Get Path Points
+        ↓
+Calculate Bearing + Distance
+        ↓
+Convert to 3D Positions
+        ↓
+Render Arrows in WebXR Scene
