@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
 import DirectionArrow from './DirectionArrow'
 import { Button } from './Button'
+import { getDirectionFromManeuver, getInstructionText } from '../utils/maneuverMapping'
 import styles from './ARNavigation.module.css'
 
 const ARNavigation = ({ steps, onClose }) => {
@@ -12,6 +13,9 @@ const ARNavigation = ({ steps, onClose }) => {
   const canvasRef = useRef(null)
 
   useEffect(() => {
+    // Initialize camera
+    initCamera()
+
     // Request device orientation permission (iOS 13+)
     if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
       DeviceOrientationEvent.requestPermission()
@@ -39,8 +43,32 @@ const ARNavigation = ({ steps, onClose }) => {
 
     return () => {
       window.removeEventListener('deviceorientation', handleDeviceOrientation)
+      // Stop camera stream
+      if (videoRef.current && videoRef.current.srcObject) {
+        const tracks = videoRef.current.srcObject.getTracks()
+        tracks.forEach(track => track.stop())
+      }
     }
   }, [])
+
+  const initCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: 'environment', // Use back camera
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
+      })
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+      }
+    } catch (error) {
+      console.error('Camera access error:', error)
+      alert('Camera access denied. Please allow camera permissions and try again.')
+    }
+  }
 
   const handleDeviceOrientation = (event) => {
     let heading = event.alpha // 0-360 degrees
@@ -63,6 +91,8 @@ const ARNavigation = ({ steps, onClose }) => {
   }
 
   const step = steps[currentStep]
+  const direction = step ? getDirectionFromManeuver(step.maneuver) : 'straight'
+  const instruction = step ? getInstructionText(step.maneuver, step.name) : 'Continue straight'
 
   return (
     <div className={styles.container}>
@@ -81,14 +111,22 @@ const ARNavigation = ({ steps, onClose }) => {
 
         {/* Direction Arrow Overlay */}
         <div className={styles.directionOverlay}>
-          <DirectionArrow direction={step?.direction} bearing={step?.bearing} />
+          <DirectionArrow 
+            direction={direction} 
+            bearing={step?.maneuver?.bearing_after || 0} 
+          />
         </div>
 
         {/* Step Info */}
         <div className={styles.stepInfo}>
-          <p className={styles.instruction}>{step?.instruction}</p>
-          <p className={styles.distance}>{(step?.distance).toFixed(0)}m</p>
+          <p className={styles.instruction}>{instruction}</p>
+          <p className={styles.distance}>{step ? (step.distance || 0).toFixed(0) : 0}m</p>
           <p className={styles.stepCounter}>Step {currentStep + 1} of {steps.length}</p>
+          <p className={styles.maneuverInfo}>
+            Type: {step?.maneuver?.type || 'N/A'} | 
+            Modifier: {step?.maneuver?.modifier || 'N/A'} | 
+            Driving Side: {step?.driving_side || 'N/A'}
+          </p>
         </div>
 
         {/* Close Button */}

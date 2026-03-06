@@ -1,5 +1,7 @@
+import { getDirectionFromManeuver, getInstructionText } from '../utils/maneuverMapping'
+
 export const getRouteWithSteps = async (source, dest) => {
-  const url = `https://router.project-osrm.org/route/v1/foot/${source.lng},${source.lat};${dest.lng},${dest.lat}?overview=full&geometries=geojson&steps=true&annotations=distance,duration`
+  const url = `${import.meta.env.VITE_OSRM_API}/foot/${source.lng},${source.lat};${dest.lng},${dest.lat}?overview=full&geometries=geojson&steps=true&annotations=distance,duration`
   
   try {
     const response = await fetch(url)
@@ -8,21 +10,22 @@ export const getRouteWithSteps = async (source, dest) => {
     if (data.routes && data.routes[0]) {
       const route = data.routes[0]
       const steps = extractSteps(route)
-      
-      console.log('=== ROUTE DETAILS ===')
-      console.log('Distance:', (route.distance / 1000).toFixed(2), 'km')
-      console.log('Duration:', (route.duration / 60).toFixed(2), 'minutes')
-      console.log('Steps:', steps)
-      console.log('Full Route Data:', route)
+      const snappedStart = route.geometry.coordinates[0]  // [lng, lat]
+
+      // console.log('=== ROUTE DETAILS ===')
+      // console.log('Distance:', (route.distance / 1000).toFixed(2), 'km')
+      // console.log('Duration:', (route.duration / 60).toFixed(2), 'minutes')
+      // console.log('Steps:', steps)
+      // console.log('Full Route Data:', route)
       
       return {
-        distance: route.distance,
-        duration: route.duration,
-        coordinates: route.geometry.coordinates,
-        steps: steps,
-        fullRoute: route
+        distance:    route.distance,
+        duration:    route.duration,
+        coordinates: route.geometry.coordinates,  // ← use as-is, no unshift
+        steps:       steps,
+        snappedStart: { lng: snappedStart[0], lat: snappedStart[1] }
       }
-    }
+      }
   } catch (error) {
     console.error('Routing error:', error)
     return null
@@ -36,15 +39,21 @@ const extractSteps = (route) => {
     route.legs.forEach((leg, legIndex) => {
       if (leg.steps) {
         leg.steps.forEach((step, stepIndex) => {
-          const direction = getDirection(step.maneuver?.type)
+          const direction = getDirectionFromManeuver(step.maneuver)
+          const instruction = getInstructionText(step.maneuver, step.name)
+          
           steps.push({
             id: `${legIndex}-${stepIndex}`,
             distance: step.distance,
             duration: step.duration,
-            instruction: step.maneuver?.instruction || 'Continue',
+            instruction: instruction,
             direction: direction,
             coordinates: step.geometry.coordinates,
-            bearing: step.maneuver?.bearing_after || 0
+            bearing: step.maneuver?.bearing_after || 0,
+            maneuver: step.maneuver,
+            name: step.name || '',
+            driving_side: step.driving_side || 'right',
+            mode: step.mode || 'walking'
           })
         })
       }
@@ -52,19 +61,4 @@ const extractSteps = (route) => {
   }
   
   return steps
-}
-
-const getDirection = (maneuverType) => {
-  const directionMap = {
-    'turn-sharp-right': 'sharp-right',
-    'turn-right': 'right',
-    'turn-slight-right': 'slight-right',
-    'straight': 'straight',
-    'turn-slight-left': 'slight-left',
-    'turn-left': 'left',
-    'turn-sharp-left': 'sharp-left',
-    'uturn': 'uturn'
-  }
-  
-  return directionMap[maneuverType] || 'straight'
 }

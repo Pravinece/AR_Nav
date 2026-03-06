@@ -3,7 +3,8 @@ import { Navigation, MapPin } from 'lucide-react'
 import { Button } from './components/Button'
 import { Input } from './components/Input'
 import { Card, CardHeader, CardTitle, CardContent } from './components/Card'
-import ARNavigation from './components/ARNavigation'
+// import ARNavigation from './components/ARNavigation'
+import LiveMapRender from './components/LiveMapRender'
 import { getRouteWithSteps } from './services/RouteService'
 import styles from './App.module.css'
 
@@ -37,7 +38,7 @@ function App() {
   }, [])
 
   const geocodePlace = async (placeName) => {
-    const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(placeName)}&limit=1&lang=en`
+    const url = `${import.meta.env.VITE_PHOTON_API}/?q=${encodeURIComponent(placeName)}&limit=1&lang=en`
     
     try {
       const response = await fetch(url)
@@ -110,13 +111,38 @@ function App() {
       setRouteSteps(routeData.steps)
       
       const coords = routeData.coordinates.map(c => [c[1], c[0]])
+      // coords.unshift([source.lat, source.lng])
+      console.log('coords: ', coords);
       window.L.polyline(coords, { color: 'red', weight: 5 }).addTo(map)
-      window.L.marker([dest.lat, dest.lng]).addTo(map).bindPopup('Destination')
+      // window.L.marker([dest.lat, dest.lng]).addTo(map).bindPopup('Destination')
+      window.L.marker([source.lat, source.lng])
+      .addTo(map)
+      .bindPopup('You are here (GPS)')
+      .openPopup()
+
+    // Show snapped-to-road marker so you can see the difference
+    window.L.circleMarker(
+      [routeData.snappedStart.lat, routeData.snappedStart.lng],
+      { radius: 6, color: 'green', fillOpacity: 1 }
+    ).addTo(map).bindPopup('Route start (road)')
+
+    window.L.marker([dest.lat, dest.lng])
+      .addTo(map)
+      .bindPopup('Destination')
+
+    // Fit map to show full route
+    map.fitBounds(coords)
+
     }
   }
+  
+
+  // if (showAR && routeSteps) {
+  //   return <ARNavigation steps={routeSteps} onClose={() => setShowAR(false)} />
+  // }
 
   if (showAR && routeSteps) {
-    return <ARNavigation steps={routeSteps} onClose={() => setShowAR(false)} />
+    return <LiveMapRender steps={routeSteps} onClose={() => setShowAR(false)} />
   }
 
   return (
@@ -140,7 +166,7 @@ function App() {
           
           {routeSteps && (
             <Button onClick={() => setShowAR(true)} style={{ width: '100%', marginTop: '12px' }}>
-              View AR
+              View Live Map
             </Button>
           )}
         </CardContent>
