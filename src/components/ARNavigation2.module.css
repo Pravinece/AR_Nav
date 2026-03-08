@@ -1,0 +1,142 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  background: #000;
+}
+
+.cameraView {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  background: #000;
+}
+
+.video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.compass {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 10;
+}
+
+.compassCircle {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border: 3px solid white;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.compassNeedle {
+  position: absolute;
+  width: 3px;
+  height: 30px;
+  background: red;
+  top: 10px;
+  transform-origin: center 30px;
+  transition: transform 0.1s ease-out;
+}
+
+.compassText {
+  color: white;
+  font-weight: bold;
+  font-size: 12px;
+  z-index: 1;
+}
+
+.directionOverlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 5;
+}
+
+.stepInfo {
+  position: absolute;
+  bottom: 100px;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 16px;
+  text-align: center;
+  z-index: 5;
+}
+
+.instruction {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+
+.distance {
+  font-size: 16px;
+  margin: 0 0 4px 0;
+}
+
+.stepCounter {
+  font-size: 14px;
+  color: #a1a1aa;
+  margin: 0 0 4px 0;
+}
+
+.maneuverInfo {
+  font-size: 12px;
+  color: #71717a;
+  margin: 0;
+  font-family: monospace;
+  opacity: 0.8;
+}
+
+.closeBtn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: rgba(0, 0, 0, 0.7);
+  border: none;
+  color: white;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.closeBtn:hover {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+.controls {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  background: #18181b;
+  justify-content: center;
+}
+
+.controls button {
+  flex: 1;
+}

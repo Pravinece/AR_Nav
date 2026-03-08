@@ -3,10 +3,10 @@ import { Navigation, MapPin } from 'lucide-react'
 import { Button } from './components/Button'
 import { Input } from './components/Input'
 import { Card, CardHeader, CardTitle, CardContent } from './components/Card'
-// import ARNavigation from './components/ARNavigation'
 import LiveMapRender from './components/LiveMapRender'
 import { getRouteWithSteps } from './services/RouteService'
 import styles from './App.module.css'
+import ARNavigation from './components/ARNavigation'
 
 function App() {
   const [destination, setDestination] = useState('')
@@ -137,13 +137,13 @@ function App() {
   }
   
 
-  // if (showAR && routeSteps) {
-  //   return <ARNavigation steps={routeSteps} onClose={() => setShowAR(false)} />
-  // }
-
   if (showAR && routeSteps) {
-    return <LiveMapRender steps={routeSteps} onClose={() => setShowAR(false)} />
+    return <ARNavigation steps={routeSteps} onClose={() => setShowAR(false)} />
   }
+
+  // if (showAR && routeSteps) {
+  //   return <LiveMapRender steps={routeSteps} onClose={() => setShowAR(false)} />
+  // }
 
   return (
     <div className={styles.container}>

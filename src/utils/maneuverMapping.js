@@ -1,38 +1,3 @@
-// Complete maneuver mapping based on OSRM routing data
-export const MANEUVER_TYPES = {
-  'depart': 'depart',
-  'turn': 'turn',
-  'new name': 'new_name',
-  'continue': 'continue',
-  'end of road': 'end_of_road',
-  'arrive': 'arrive',
-  'merge': 'merge',
-  'on ramp': 'on_ramp',
-  'off ramp': 'off_ramp',
-  'fork': 'fork',
-  'roundabout': 'roundabout',
-  'rotary': 'rotary',
-  'roundabout turn': 'roundabout_turn',
-  'notification': 'notification'
-}
-
-export const MANEUVER_MODIFIERS = {
-  'uturn': 'uturn',
-  'sharp right': 'sharp_right',
-  'right': 'right',
-  'slight right': 'slight_right',
-  'straight': 'straight',
-  'slight left': 'slight_left',
-  'left': 'left',
-  'sharp left': 'sharp_left'
-}
-
-// Driving side indicates which side of the road vehicles drive on
-export const DRIVING_SIDE = {
-  'left': 'left',   // Countries like UK, India, Japan
-  'right': 'right'  // Countries like US, Germany, France
-}
-
 export const getDirectionFromManeuver = (maneuver) => {
   if (!maneuver) return 'straight'
   
