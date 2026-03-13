@@ -33,6 +33,13 @@ export const getDirectionFromManeuver = (maneuver) => {
   }
 }
 
+export   const getCurrentDirection = (currentStep) => {
+  if (!currentStep?.maneuver) return 'straight'
+  
+  // Use your getDirectionFromManeuver utility
+  return getDirectionFromManeuver(currentStep.maneuver)
+}
+
 export const getDirectionFromModifier = (modifier) => {
   switch (modifier) {
     case 'uturn':
@@ -111,4 +118,4 @@ export const getModifierText = (modifier) => {
     default:
       return 'continue'
   }
-}
+}  
