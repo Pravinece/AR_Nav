@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
 import styles from './LiveMapRender.module.css'
+import { Button } from './Button'
 
-const LiveMapRender = ({ steps, onClose }) => {
+const LiveMapRender = ({ steps, onClose, setShowAR }) => {
   const mapRef             = useRef(null)
   const mapInstanceRef     = useRef(null)
   const userMarkerRef      = useRef(null)
@@ -145,6 +146,8 @@ const LiveMapRender = ({ steps, onClose }) => {
       <button className={styles.closeBtn} onClick={onClose}>
         <X size={24} />
       </button>
+
+      <Button onClick={() => {onClose(),setShowAR()}} className={styles.arBtn}>👓</Button>
     </div>
   )
 }

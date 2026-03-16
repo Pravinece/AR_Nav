@@ -16,16 +16,16 @@ import { ARButton, XR } from '@react-three/xr'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const ARRIVAL_THRESHOLD_M = 15  // auto-advance step within 15m of waypoint
-const ALIGNED_THRESHOLD   = 30  // degrees — within this = facing right way
+const ALIGNED_THRESHOLD = 30  // degrees — within this = facing right way
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 // Haversine formula — real distance in meters between two GPS points
 const getDistanceMeters = (lat1, lng1, lat2, lng2) => {
-  const R    = 6371000
+  const R = 6371000
   const dLat = (lat2 - lat1) * Math.PI / 180
   const dLng = (lng2 - lng1) * Math.PI / 180
-  const a    =
+  const a =
     Math.sin(dLat / 2) ** 2 +
     Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
     Math.sin(dLng / 2) ** 2
@@ -35,18 +35,18 @@ const getDistanceMeters = (lat1, lng1, lat2, lng2) => {
 // Real compass bearing from point A to point B (0-360 degrees)
 const computeBearing = (fromLat, fromLng, toLat, toLng) => {
   const toRad = d => d * Math.PI / 180
-  const dLng  = toRad(toLng - fromLng)
-  const lat1  = toRad(fromLat)
-  const lat2  = toRad(toLat)
-  const x     = Math.sin(dLng) * Math.cos(lat2)
-  const y     = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng)
+  const dLng = toRad(toLng - fromLng)
+  const lat1 = toRad(fromLat)
+  const lat2 = toRad(toLat)
+  const x = Math.sin(dLng) * Math.cos(lat2)
+  const y = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng)
   return (Math.atan2(x, y) * 180 / Math.PI + 360) % 360
 }
 
 // How many degrees to rotate to face route — negative=left, positive=right
 const getHeadingDiff = (deviceHeading, routeBearing) => {
   let diff = routeBearing - deviceHeading
-  if (diff >  180) diff -= 360
+  if (diff > 180) diff -= 360
   if (diff < -180) diff += 360
   return diff
 }
@@ -54,13 +54,13 @@ const getHeadingDiff = (deviceHeading, routeBearing) => {
 // ─── Component ────────────────────────────────────────────────────────────────
 const ARNavigation = ({ steps, onClose }) => {
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
-  const [deviceHeading,    setDeviceHeading]     = useState(null)
-  const [userLocation,     setUserLocation]      = useState(null)
-  const [arrived,          setArrived]           = useState(false)
-  const [gpsReady,         setGpsReady]          = useState(false)
-  const [isARActive,       setIsARActive]        = useState(false)
+  const [deviceHeading, setDeviceHeading] = useState(null)
+  const [userLocation, setUserLocation] = useState(null)
+  const [arrived, setArrived] = useState(false)
+  const [gpsReady, setGpsReady] = useState(false)
+  const [isARActive, setIsARActive] = useState(false)
 
-  const watchIdRef     = useRef(null)
+  const watchIdRef = useRef(null)
   const currentStepRef = useRef(0)
 
   currentStepRef.current = currentStepIndex
@@ -69,7 +69,7 @@ const ARNavigation = ({ steps, onClose }) => {
   useEffect(() => {
     const handleOrientation = (e) => {
       let heading
-    
+
       if (e.webkitCompassHeading !== undefined) {
         // iOS — already correct, clockwise from North
         heading = e.webkitCompassHeading
@@ -80,12 +80,12 @@ const ARNavigation = ({ steps, onClose }) => {
         // Android deviceorientation fallback — counter-clockwise, needs inversion
         heading = 360 - e.alpha
       }
-    
+
       setDeviceHeading(Math.round(heading))
     }
     const addListeners = () => {
       window.addEventListener('deviceorientationabsolute', handleOrientation, true)
-      window.addEventListener('deviceorientation',         handleOrientation, true)
+      window.addEventListener('deviceorientation', handleOrientation, true)
     }
 
     if (typeof DeviceOrientationEvent?.requestPermission === 'function') {
@@ -98,7 +98,7 @@ const ARNavigation = ({ steps, onClose }) => {
 
     return () => {
       window.removeEventListener('deviceorientationabsolute', handleOrientation, true)
-      window.removeEventListener('deviceorientation',         handleOrientation, true)
+      window.removeEventListener('deviceorientation', handleOrientation, true)
     }
   }, [])
 
@@ -126,7 +126,7 @@ const ARNavigation = ({ steps, onClose }) => {
   const checkStepAdvance = useCallback((loc) => {
     if (!steps?.length) return
 
-    const idx  = currentStepRef.current
+    const idx = currentStepRef.current
     const step = steps[idx]
     if (!step) return
 
@@ -151,9 +151,9 @@ const ARNavigation = ({ steps, onClose }) => {
 
   const routeBearing = (() => {
     if (!currentStep) return 0
-  
+
     const maneuverType = currentStep.maneuver?.type
-  
+
     // For depart and straight steps — compute real bearing from GPS to waypoint
     // This tells user "walk in this direction to reach the turn point"
     if (
@@ -164,7 +164,7 @@ const ARNavigation = ({ steps, onClose }) => {
       const [nextLng, nextLat] = currentStep.maneuver.location
       return computeBearing(userLocation.lat, userLocation.lng, nextLat, nextLng)
     }
-  
+
     // For actual turns — use OSRM's bearing_after
     // This tells user "after reaching this point, face this direction"
     return currentStep?.maneuver?.bearing_after ?? currentStep?.bearing ?? 0
@@ -217,7 +217,11 @@ const ARNavigation = ({ steps, onClose }) => {
 
   // Get current arrow component based on maneuver
   const direction = getCurrentDirection(currentStep)
-  const CurrentArrow = arrows.find(a => a.id === direction)?.component || StraightArrow
+  const CurrentArrow = (() => {
+    if (distanceToStep === null) return StraightArrow
+    if (distanceToStep > 40) return StraightArrow
+    return arrows.find(a => a.id === direction)?.component || StraightArrow
+  })()
 
   // ─── AR Session Handlers ──────────────────────────────────────────────────
   const handleSessionStart = () => {
@@ -306,26 +310,6 @@ const ARNavigation = ({ steps, onClose }) => {
 
       {/* UI Overlay - All navigation info */}
       <div className={styles.overlay}>
-        
-        {/* Status Indicator */}
-        <div 
-          style={{
-            position: 'fixed',
-            top: '20px',
-            right: '20px',
-            zIndex: 1000,
-            padding: '10px 20px',
-            borderRadius: '20px',
-            fontWeight: '700',
-            fontSize: '14px',
-            background: isARActive ? 'rgba(0, 255, 0, 0.2)' : 'rgba(255, 0, 0, 0.2)',
-            color: isARActive ? '#00ff00' : '#ff6666',
-            border: `2px solid ${isARActive ? '#00ff00' : '#ff6666'}`,
-            backdropFilter: 'blur(10px)',
-          }}
-        >
-          {isARActive ? '🟢 AR Active' : '🔴 AR Inactive'}
-        </div>
 
         {/* GPS Status */}
         {!gpsReady && (
@@ -336,15 +320,15 @@ const ARNavigation = ({ steps, onClose }) => {
 
         {/* Bottom instruction card */}
         <div className={styles.instructionCard}>
-          
+
           {/* Current Direction Indicator */}
-          <div style={{
+          {/* <div style={{
             textAlign: 'center',
             fontSize: '48px',
             marginBottom: '12px',
           }}>
             {arrows.find(a => a.id === direction)?.icon || '⬆️'}
-          </div>
+          </div> */}
 
           {/* Distance to next turn */}
           {distanceToStep !== null && (
@@ -361,18 +345,9 @@ const ARNavigation = ({ steps, onClose }) => {
           {/* OSRM turn instruction */}
           <p className={styles.instruction}>{instruction}</p>
 
-          {/* Heading feedback */}
-          <div className={`${styles.headingFeedback} ${isAligned ? styles.aligned : styles.misaligned}`}>
+          {/* <div className={`${styles.headingFeedback} ${isAligned ? styles.aligned : styles.misaligned}`}>
             {getHeadingInstruction()}
-          </div>
-
-          {/* Debug info */}
-          <div className={styles.debugRow}>
-            <span>🧭 {deviceHeading ?? '…'}°</span>
-            <span>🗺 {Math.round(routeBearing)}°</span>
-            <span>📐 {headingDiff !== null ? `${Math.round(headingDiff)}°` : '…'}</span>
-            <span>📍 Step {currentStepIndex + 1}/{steps?.length ?? 0}</span>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

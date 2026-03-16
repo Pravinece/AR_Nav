@@ -14,6 +14,7 @@ function App() {
   const [currentLocation, setCurrentLocation] = useState(null)
   const [map, setMap] = useState(null)
   const [routeSteps, setRouteSteps] = useState(null)
+  const [showMap, setShowMap] = useState(false)
   const [showAR, setShowAR] = useState(false)
   const mapRef = useRef(null)
 
@@ -138,12 +139,12 @@ function App() {
   
 
   if (showAR && routeSteps) {
-    return <ARNavigation steps={routeSteps} onClose={() => setShowAR(false)} />
+    return <ARNavigation steps={routeSteps} onClose={() => {setShowAR(false),setShowMap(true)}}/>
   }
 
-  // if (showAR && routeSteps) {
-  //   return <LiveMapRender steps={routeSteps} onClose={() => setShowAR(false)} />
-  // }
+  if (showMap && routeSteps) {
+    return <LiveMapRender steps={routeSteps} onClose={() => setShowMap(false)} setShowAR={()=> setShowAR(true)} />
+  }
 
   return (
     <div className={styles.container}>
@@ -165,7 +166,7 @@ function App() {
           <div ref={mapRef} className={styles.map} />
           
           {routeSteps && (
-            <Button onClick={() => setShowAR(true)} style={{ width: '100%', marginTop: '12px' }}>
+            <Button onClick={() => setShowMap(true)} style={{ width: '100%', marginTop: '12px' }}>
               View Live Map
             </Button>
           )}
