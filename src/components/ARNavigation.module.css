@@ -205,3 +205,54 @@
 .arrivedBtn:hover {
   background: #1d4ed8;
 }
+
+.backButton{
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+  color: #fff;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(255, 68, 68, 0.4);
+  z-index: 10001 !important;
+
+}
+.logButton{
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+  color: #fff;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(255, 68, 68, 0.4);
+  z-index: 10001 !important;
+}
+
+.arButton{
+  position: fixed;
+  top: 20px;
+  right: 50%;
+  transform: translateX(-50%);
+  z-index: 10001 !important;
+  padding: 16px 32px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #000;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 0 4px 20px rgba(0, 255, 0, 0.4);
+  background: linear-gradient(135deg, #00ff00 0%, #00cc00 100%);
+  height: fit-content;
+
+}

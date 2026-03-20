@@ -13,14 +13,14 @@ import RoundaboutArrow from './Arrows/RoundaboutArrow'
 import ArriveArrow from './Arrows/ArriveArrow'
 import { Canvas } from '@react-three/fiber'
 import { ARButton, XR } from '@react-three/xr'
+import { ScrollText } from 'lucide-react'
+import LogViewer from './LogViewer'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const ARRIVAL_THRESHOLD_M = 15  // auto-advance step within 15m of waypoint
-const ALIGNED_THRESHOLD = 30  // degrees — within this = facing right way
+const ARRIVAL_THRESHOLD_M = 15
+const ALIGNED_THRESHOLD = 30
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-// Haversine formula — real distance in meters between two GPS points
 const getDistanceMeters = (lat1, lng1, lat2, lng2) => {
   const R = 6371000
   const dLat = (lat2 - lat1) * Math.PI / 180
@@ -32,7 +32,6 @@ const getDistanceMeters = (lat1, lng1, lat2, lng2) => {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
-// Real compass bearing from point A to point B (0-360 degrees)
 const computeBearing = (fromLat, fromLng, toLat, toLng) => {
   const toRad = d => d * Math.PI / 180
   const dLng = toRad(toLng - fromLng)
@@ -43,7 +42,6 @@ const computeBearing = (fromLat, fromLng, toLat, toLng) => {
   return (Math.atan2(x, y) * 180 / Math.PI + 360) % 360
 }
 
-// How many degrees to rotate to face route — negative=left, positive=right
 const getHeadingDiff = (deviceHeading, routeBearing) => {
   let diff = routeBearing - deviceHeading
   if (diff > 180) diff -= 360
@@ -59,6 +57,8 @@ const ARNavigation = ({ steps, onClose }) => {
   const [arrived, setArrived] = useState(false)
   const [gpsReady, setGpsReady] = useState(false)
   const [isARActive, setIsARActive] = useState(false)
+  const [xrSession, setXrSession] = useState(null)
+  const [showLogs, setShowLogs] = useState(false)
 
   const watchIdRef = useRef(null)
   const currentStepRef = useRef(0)
@@ -69,18 +69,13 @@ const ARNavigation = ({ steps, onClose }) => {
   useEffect(() => {
     const handleOrientation = (e) => {
       let heading
-
       if (e.webkitCompassHeading !== undefined) {
-        // iOS — already correct, clockwise from North
         heading = e.webkitCompassHeading
       } else if (e.absolute === true) {
-        // Android deviceorientationabsolute — alpha is clockwise already when absolute=true
         heading = e.alpha
       } else {
-        // Android deviceorientation fallback — counter-clockwise, needs inversion
         heading = 360 - e.alpha
       }
-
       setDeviceHeading(Math.round(heading))
     }
     const addListeners = () => {
@@ -151,11 +146,7 @@ const ARNavigation = ({ steps, onClose }) => {
 
   const routeBearing = (() => {
     if (!currentStep) return 0
-
     const maneuverType = currentStep.maneuver?.type
-
-    // For depart and straight steps — compute real bearing from GPS to waypoint
-    // This tells user "walk in this direction to reach the turn point"
     if (
       (maneuverType === 'depart' || maneuverType === 'continue' || maneuverType === 'new name') &&
       userLocation &&
@@ -164,16 +155,10 @@ const ARNavigation = ({ steps, onClose }) => {
       const [nextLng, nextLat] = currentStep.maneuver.location
       return computeBearing(userLocation.lat, userLocation.lng, nextLat, nextLng)
     }
-
-    // For actual turns — use OSRM's bearing_after
-    // This tells user "after reaching this point, face this direction"
     return currentStep?.maneuver?.bearing_after ?? currentStep?.bearing ?? 0
   })()
 
-  const headingDiff = deviceHeading !== null
-    ? getHeadingDiff(deviceHeading, routeBearing)
-    : null
-
+  const headingDiff = deviceHeading !== null ? getHeadingDiff(deviceHeading, routeBearing) : null
   const isAligned = headingDiff !== null && Math.abs(headingDiff) < ALIGNED_THRESHOLD
 
   const instruction = currentStep
@@ -185,17 +170,6 @@ const ARNavigation = ({ steps, onClose }) => {
     const [lng, lat] = currentStep.maneuver.location
     return getDistanceMeters(userLocation.lat, userLocation.lng, lat, lng)
   })()
-
-  const getHeadingInstruction = () => {
-    if (deviceHeading === null) return '📡 Waiting for compass…'
-    if (!isAligned) {
-      const deg = Math.abs(Math.round(headingDiff))
-      return headingDiff > 0
-        ? `↩️ Turn right ${deg}°`
-        : `↪️ Turn left ${deg}°`
-    }
-    return '✅ Go straight ahead'
-  }
 
   // Arrow configuration
   const arrows = [
@@ -215,7 +189,6 @@ const ARNavigation = ({ steps, onClose }) => {
     { id: 'arrive', component: ArriveArrow },
   ]
 
-  // Get current arrow component based on maneuver
   const direction = getCurrentDirection(currentStep)
   const CurrentArrow = (() => {
     if (distanceToStep === null) return StraightArrow
@@ -224,14 +197,24 @@ const ARNavigation = ({ steps, onClose }) => {
   })()
 
   // ─── AR Session Handlers ──────────────────────────────────────────────────
-  const handleSessionStart = () => {
+  const handleSessionStart = (session) => {
     console.log('[AR] Session started')
+    setXrSession(session)
     setIsARActive(true)
   }
 
   const handleSessionEnd = () => {
     console.log('[AR] Session ended')
     setIsARActive(false)
+    setXrSession(null)
+  }
+
+  const handleExitAR = async () => {
+    if (xrSession) {
+      await xrSession.end()
+      setIsARActive(false)
+      setXrSession(null)
+    }
   }
 
   // ─── Arrived screen ───────────────────────────────────────────────────────
@@ -254,7 +237,31 @@ const ARNavigation = ({ steps, onClose }) => {
   // ─── Main render ──────────────────────────────────────────────────────────
   return (
     <div className={styles.container}>
-      {/* AR Button - Starts AR Session */}
+
+      {/* Canvas with XR - pointer-events none so it doesn't block LogViewer */}
+      <Canvas
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          pointerEvents: 'none',
+        }}
+      >
+        <XR>
+          <ambientLight intensity={1} />
+          <directionalLight position={[5, 5, 5]} intensity={0.8} />
+          <directionalLight position={[-5, -5, -5]} intensity={0.3} />
+          <CurrentArrow
+            deviceHeading={deviceHeading}
+            routeBearing={routeBearing}
+            distance={distanceToStep}
+          />
+        </XR>
+      </Canvas>
+
+      {/* AR Button */}
       <ARButton
         mode="AR"
         sessionInit={{
@@ -268,7 +275,7 @@ const ARNavigation = ({ steps, onClose }) => {
           top: '20px',
           left: '50%',
           transform: 'translateX(-50%)',
-          zIndex: 1001,
+          zIndex: 200,
           padding: '16px 32px',
           fontSize: '18px',
           fontWeight: '700',
@@ -283,33 +290,31 @@ const ARNavigation = ({ steps, onClose }) => {
         }}
       />
 
-      {/* Canvas with XR - This renders the AR scene */}
-      <Canvas
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-        }}
-      >
-        <XR>
-          {/* Lighting */}
-          <ambientLight intensity={1} />
-          <directionalLight position={[5, 5, 5]} intensity={0.8} />
-          <directionalLight position={[-5, -5, -5]} intensity={0.3} />
-
-          {/* Render the appropriate arrow based on current maneuver */}
-          <CurrentArrow
-            deviceHeading={deviceHeading}
-            routeBearing={routeBearing}
-            distance={distanceToStep}
-          />
-        </XR>
-      </Canvas>
-
-      {/* UI Overlay - All navigation info */}
+      {/* UI Overlay */}
       <div className={styles.overlay}>
+
+        {/* Top bar buttons */}
+        <div className={styles.topBar}>
+
+          {/* Left: Back or Exit AR */}
+          {!isARActive ? (
+            <button className={styles.topBtn} onClick={onClose}>
+              ← Back
+            </button>
+          ) : (
+            <button className={styles.topBtn} onClick={handleExitAR}>
+              ✕ Exit AR
+            </button>
+          )}
+
+          {/* Right: Logs button - only when not in AR */}
+          {!isARActive && (
+            <button className={styles.topBtnBlue} onClick={() => setShowLogs(true)}>
+              <ScrollText size={18} />
+              Logs
+            </button>
+          )}
+        </div>
 
         {/* GPS Status */}
         {!gpsReady && (
@@ -320,17 +325,6 @@ const ARNavigation = ({ steps, onClose }) => {
 
         {/* Bottom instruction card */}
         <div className={styles.instructionCard}>
-
-          {/* Current Direction Indicator */}
-          {/* <div style={{
-            textAlign: 'center',
-            fontSize: '48px',
-            marginBottom: '12px',
-          }}>
-            {arrows.find(a => a.id === direction)?.icon || '⬆️'}
-          </div> */}
-
-          {/* Distance to next turn */}
           {distanceToStep !== null && (
             <div className={styles.distanceRow}>
               <span className={styles.distanceValue}>
@@ -341,15 +335,12 @@ const ARNavigation = ({ steps, onClose }) => {
               <span className={styles.distanceLabel}>to next turn</span>
             </div>
           )}
-
-          {/* OSRM turn instruction */}
           <p className={styles.instruction}>{instruction}</p>
-
-          {/* <div className={`${styles.headingFeedback} ${isAligned ? styles.aligned : styles.misaligned}`}>
-            {getHeadingInstruction()}
-          </div> */}
         </div>
       </div>
+
+      {/* Log Viewer Modal - Outside overlay so it's fully interactive */}
+      <LogViewer isOpen={showLogs} onClose={() => setShowLogs(false)} />
     </div>
   )
 }

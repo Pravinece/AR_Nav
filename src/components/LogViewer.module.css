@@ -1,0 +1,218 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+  pointer-events: auto;
+}
+
+.modal {
+  background: #1e1e1e;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 600px;
+  height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  border: 1px solid #333;
+  z-index: 10000;
+  position: relative;
+  pointer-events: auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #333;
+  background: #252525;
+  border-radius: 12px 12px 0 0;
+  pointer-events: auto;
+}
+
+.title {
+  margin: 0;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+  pointer-events: auto;
+}
+
+.closeBtn:hover {
+  color: #fff;
+}
+
+.filterContainer {
+  display: flex;
+  gap: 8px;
+  padding: 12px 20px;
+  border-bottom: 1px solid #333;
+  background: #1e1e1e;
+  flex-wrap: wrap;
+  pointer-events: auto;
+}
+
+.filterBtn {
+  padding: 6px 12px;
+  border: 1px solid #444;
+  background: #2a2a2a;
+  color: #aaa;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.2s;
+  pointer-events: auto;
+}
+
+.filterBtn:hover {
+  border-color: #666;
+  color: #fff;
+}
+
+.filterBtn.active {
+  background: #0066ff;
+  border-color: #0066ff;
+  color: #fff;
+}
+
+.logsContainer {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.logsContainer::-webkit-scrollbar {
+  width: 8px;
+}
+
+.logsContainer::-webkit-scrollbar-track {
+  background: #1e1e1e;
+}
+
+.logsContainer::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 4px;
+}
+
+.logsContainer::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
+
+.emptyState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #666;
+  font-size: 14px;
+  pointer-events: auto;
+}
+
+.logEntry {
+  padding: 10px 12px;
+  border-radius: 6px;
+  border-left: 3px solid;
+  background: #2a2a2a;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  pointer-events: auto;
+  flex-shrink: 0;
+}
+
+.logEntry.log {
+  border-left-color: #0066ff;
+}
+
+.logEntry.error {
+  border-left-color: #ff4444;
+  background: rgba(255, 68, 68, 0.1);
+}
+
+.logEntry.warn {
+  border-left-color: #ffaa00;
+  background: rgba(255, 170, 0, 0.1);
+}
+
+.logHeader {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 4px;
+  align-items: center;
+}
+
+.logType {
+  font-size: 14px;
+}
+
+.logTime {
+  color: #888;
+  font-size: 11px;
+}
+
+.logMessage {
+  color: #ccc;
+  word-break: break-word;
+  white-space: pre-wrap;
+  line-height: 1.4;
+}
+
+.logEntry.error .logMessage {
+  color: #ff8888;
+}
+
+.logEntry.warn .logMessage {
+  color: #ffcc88;
+}
+
+.footer {
+  padding: 12px 20px;
+  border-top: 1px solid #333;
+  background: #252525;
+  border-radius: 0 0 12px 12px;
+  pointer-events: auto;
+}
+
+.clearBtn {
+  width: 100%;
+  padding: 10px;
+  background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: opacity 0.2s;
+  pointer-events: auto;
+}
+
+.clearBtn:hover {
+  opacity: 0.9;
+}

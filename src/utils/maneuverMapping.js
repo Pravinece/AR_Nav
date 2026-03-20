@@ -118,4 +118,4 @@ export const getModifierText = (modifier) => {
     default:
       return 'continue'
   }
-}  
+}
